@@ -1,8 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <persistence xmlns="http://xmlns.jcp.org/xml/ns/persistence" version="2.1">
     <persistence-unit name="persistenceUnit">
+        <class>com.quanmin.manager.entity.AdminPermission</class>
+        <class>com.quanmin.manager.entity.AdminRole</class>
+        <class>com.quanmin.manager.entity.AdminRole2Permission</class>
+        <class>com.quanmin.manager.entity.AdminUser</class>
+        <class>com.quanmin.manager.entity.FrontUser</class>
+        <class>com.quanmin.manager.entity.SettingClass</class>
+        <class>com.quanmin.manager.entity.SettingNone</class>
+        <class>com.quanmin.manager.entity.SettingSubject</class>
+        <class>com.quanmin.manager.entity.VideoCourse</class>
+        <class>com.quanmin.manager.entity.VideoLession</class>
         <properties>
-            <property name="hibernate.connection.url" value="jdbc:mysql://localhost:3306/purch?useUnicode=true&amp;characterEncoding=UTF8&amp;useOldAliasMetadataBehavior=true&amp;zeroDateTimeBehavior=convertToNull&amp;useSSL=false"/>
+            <property name="hibernate.connection.url" value="jdbc:mysql://localhost:3306/quanmin"/>
             <property name="hibernate.connection.driver_class" value="com.mysql.jdbc.Driver"/>
             <property name="hibernate.connection.username" value="root"/>
             <property name="hibernate.connection.password" value="root"/>
