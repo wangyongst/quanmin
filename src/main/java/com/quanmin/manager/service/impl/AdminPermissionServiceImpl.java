@@ -17,6 +17,8 @@ import org.apache.logging.log4j.Logger;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.crypto.hash.Md5Hash;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Example;
+import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -54,7 +56,7 @@ public class AdminPermissionServiceImpl implements AdminPermissionService {
     }
 
     @Override
-    public Result login(String username) {
+    public Result findByAdminUsername(String username) {
         List<AdminUser> AdminUserList = adminUserRepository.findByUsername(username);
         if (AdminUserList.size() == 1){
             AdminUser adminUser = AdminUserList.get(0);
@@ -67,15 +69,14 @@ public class AdminPermissionServiceImpl implements AdminPermissionService {
     @Override
     public Result adminUserList(AdminPermissionParameter adminPermissionParameter) {
         Sort sort = new Sort(Sort.Direction.DESC, "createtime");
-//        AdminUser adminUser = new AdminUser();
-//        if (StringUtils.isNotBlank(adminPermissionParameter.g())) adminUser.setMobile(adminPermissionParameter.getMobile());
-//        if (StringUtils.isNotBlank(adminPermissionParameter.getName())) adminUser.setName(adminPermissionParameter.getName());
-//        ExampleMatcher matcher = ExampleMatcher.matching()
-//                .withMatcher("mobile", match -> match.contains())
-//                .withMatcher("name", match -> match.contains());
-//        Example<AdminUser> example = Example.of(adminUser, matcher);
-//        return ResultUtil.okWithData(AdminUserRepository.findAll(example, sort));
-        return ResultUtil.okWithData(adminUserRepository.findAll());
+        AdminUser adminUser = new AdminUser();
+        if (StringUtils.isNotBlank(adminPermissionParameter.getMobile())) adminUser.setMobile(adminPermissionParameter.getMobile());
+        if (StringUtils.isNotBlank(adminPermissionParameter.getName())) adminUser.setName(adminPermissionParameter.getName());
+        ExampleMatcher matcher = ExampleMatcher.matching()
+                .withMatcher("mobile", match -> match.contains())
+                .withMatcher("name", match -> match.contains());
+        Example<AdminUser> example = Example.of(adminUser, matcher);
+        return ResultUtil.okWithData(adminUserRepository.findAll(example, sort));
     }
 
     @Override
