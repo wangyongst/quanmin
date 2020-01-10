@@ -1,49 +1,31 @@
 package com.quanmin.manager.model;
 
+import javax.persistence.Basic;
+import javax.persistence.Column;
 import java.util.List;
 
 public class AdminPermissionParameter {
-    private int delete;
-    private int create;
-    private int update;
-    private String username;
+    private int sud;
+
     private int userid;
-    private int roleid;
+    private String name;
+    private String username;
     private String password;
+    private String mobile;
+    private String createusername;
+    private String createtime;
+    private Integer roleid;
+    private Integer islock;
     private String password2;
     private String newpassword;
     private String newpassword2;
 
-    public int getDelete() {
-        return delete;
+    public int getSud() {
+        return sud;
     }
 
-    public void setDelete(int delete) {
-        this.delete = delete;
-    }
-
-    public int getCreate() {
-        return create;
-    }
-
-    public void setCreate(int create) {
-        this.create = create;
-    }
-
-    public int getUpdate() {
-        return update;
-    }
-
-    public void setUpdate(int update) {
-        this.update = update;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
+    public void setSud(int sud) {
+        this.sud = sud;
     }
 
     public int getUserid() {
@@ -54,12 +36,20 @@ public class AdminPermissionParameter {
         this.userid = userid;
     }
 
-    public int getRoleid() {
-        return roleid;
+    public String getName() {
+        return name;
     }
 
-    public void setRoleid(int roleid) {
-        this.roleid = roleid;
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public String getPassword() {
@@ -68,6 +58,46 @@ public class AdminPermissionParameter {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getMobile() {
+        return mobile;
+    }
+
+    public void setMobile(String mobile) {
+        this.mobile = mobile;
+    }
+
+    public String getCreateusername() {
+        return createusername;
+    }
+
+    public void setCreateusername(String createusername) {
+        this.createusername = createusername;
+    }
+
+    public String getCreatetime() {
+        return createtime;
+    }
+
+    public void setCreatetime(String createtime) {
+        this.createtime = createtime;
+    }
+
+    public Integer getRoleid() {
+        return roleid;
+    }
+
+    public void setRoleid(Integer roleid) {
+        this.roleid = roleid;
+    }
+
+    public Integer getIslock() {
+        return islock;
+    }
+
+    public void setIslock(Integer islock) {
+        this.islock = islock;
     }
 
     public String getPassword2() {

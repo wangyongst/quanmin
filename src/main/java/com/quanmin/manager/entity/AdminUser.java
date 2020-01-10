@@ -1,7 +1,6 @@
 package com.quanmin.manager.entity;
 
 import javax.persistence.*;
-import java.util.Objects;
 
 @Entity
 public class AdminUser {
@@ -30,9 +29,9 @@ public class AdminUser {
     @Basic
     @Column(name = "createtime", nullable = true, length = 255)
     private String createtime;
-    @Basic
-    @Column(name = "roleid", nullable = true)
-    private Integer roleid;
+    @ManyToOne(cascade = {CascadeType.MERGE, CascadeType.REFRESH, CascadeType.PERSIST})
+    @JoinColumn(name = "roleid", referencedColumnName = "id")
+    private AdminRole adminRole;
     @Basic
     @Column(name = "islock", nullable = true)
     private Integer islock;
@@ -93,12 +92,12 @@ public class AdminUser {
         this.createtime = createtime;
     }
 
-    public Integer getRoleid() {
-        return roleid;
+    public AdminRole getAdminRole() {
+        return adminRole;
     }
 
-    public void setRoleid(Integer roleid) {
-        this.roleid = roleid;
+    public void setAdminRole(AdminRole adminRole) {
+        this.adminRole = adminRole;
     }
 
     public Integer getIslock() {

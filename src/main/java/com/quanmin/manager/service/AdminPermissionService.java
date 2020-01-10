@@ -7,21 +7,21 @@ public interface AdminPermissionService {
 
     Result me();
 
-    Result findByUsername(String username);
+    Result findByAdminUsername(String username);
 
-    Result userList(AdminPermissionParameter adminPermissionParameter);
+    Result adminUserList(AdminPermissionParameter adminPermissionParameter);
 
-    Result roleList(AdminPermissionParameter adminPermissionParameter);
+    Result adminRoleList(AdminPermissionParameter adminPermissionParameter);
 
-    Result user(AdminPermissionParameter adminPermissionParameter);
+    Result adminUser(AdminPermissionParameter adminPermissionParameter);
 
-    Result userSud(AdminPermissionParameter adminPermissionParameter);
+    Result adminUserSud(AdminPermissionParameter adminPermissionParameter);
 
-    Result role(AdminPermissionParameter adminPermissionParameter);
+    Result adminRole(AdminPermissionParameter adminPermissionParameter);
 
-    Result roleSud(AdminPermissionParameter adminPermissionParameter);
+    Result adminRoleSud(AdminPermissionParameter adminPermissionParameter);
 
     Result permissionList(AdminPermissionParameter adminPermissionParameter);
 
-    Result changePassword(AdminPermissionParameter adminPermissionParameter);
+    Result changeAdminPassword(AdminPermissionParameter adminPermissionParameter);
 }

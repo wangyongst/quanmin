@@ -1,5 +1,7 @@
 package com.quanmin.manager.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import javax.persistence.*;
 
 @Entity
@@ -11,12 +13,14 @@ public class AdminRole2Permission {
     @Column(name = "id", nullable = false)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
-    @Basic
-    @Column(name = "roleid", nullable = true)
-    private Integer roleid;
-    @Basic
-    @Column(name = "permissionid", nullable = true)
-    private Integer permissionid;
+
+    @ManyToOne(cascade = {CascadeType.MERGE, CascadeType.REFRESH, CascadeType.PERSIST})
+    @JoinColumn(name = "roleid", referencedColumnName = "id")
+    private AdminRole adminRole;
+
+    @ManyToOne(cascade = {CascadeType.MERGE, CascadeType.REFRESH, CascadeType.PERSIST})
+    @JoinColumn(name = "permissionid", referencedColumnName = "id")
+    private AdminPermission adminPermission;
 
     public Integer getId() {
         return id;
@@ -26,19 +30,19 @@ public class AdminRole2Permission {
         this.id = id;
     }
 
-    public Integer getRoleid() {
-        return roleid;
+    public AdminRole getAdminRole() {
+        return adminRole;
     }
 
-    public void setRoleid(Integer roleid) {
-        this.roleid = roleid;
+    public void setAdminRole(AdminRole adminRole) {
+        this.adminRole = adminRole;
     }
 
-    public Integer getPermissionid() {
-        return permissionid;
+    public AdminPermission getAdminPermission() {
+        return adminPermission;
     }
 
-    public void setPermissionid(Integer permissionid) {
-        this.permissionid = permissionid;
+    public void setAdminPermission(AdminPermission adminPermission) {
+        this.adminPermission = adminPermission;
     }
 }

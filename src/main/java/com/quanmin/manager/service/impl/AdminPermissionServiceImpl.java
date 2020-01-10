@@ -1,7 +1,9 @@
 package com.quanmin.manager.service.impl;
 
+import com.quanmin.manager.entity.AdminRole;
 import com.quanmin.manager.entity.AdminUser;
 import com.quanmin.manager.model.AdminPermissionParameter;
+import com.quanmin.manager.repository.AdminPermissionRepository;
 import com.quanmin.manager.repository.AdminRole2PermissionRepository;
 import com.quanmin.manager.repository.AdminRoleRepository;
 import com.quanmin.manager.repository.AdminUserRepository;
@@ -15,6 +17,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.crypto.hash.Md5Hash;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.domain.Sort;
@@ -45,6 +48,9 @@ public class AdminPermissionServiceImpl implements AdminPermissionService {
     private AdminRoleRepository adminRoleRepository;
 
     @Autowired
+    private AdminPermissionRepository adminPermissionRepository;
+
+    @Autowired
     private AdminRole2PermissionRepository adminRole2PermissionRepository;
 
     @Override
@@ -54,214 +60,142 @@ public class AdminPermissionServiceImpl implements AdminPermissionService {
     }
 
     @Override
-    public Result findByUsername(String username) {
+    public Result findByAdminUsername(String username) {
         List<AdminUser> AdminUserList = adminUserRepository.findByUsername(username);
         if (AdminUserList.size() == 1) return ResultUtil.okWithData(AdminUserList.get(0));
-        return null;
+        return ResultUtil.errorWithMessage("查询失败！");
     }
 
     @Override
-    public Result userList(AdminPermissionParameter adminPermissionParameter) {
+    public Result adminUserList(AdminPermissionParameter adminPermissionParameter) {
         Sort sort = new Sort(Sort.Direction.DESC, "createtime");
-        AdminUser adminUser = new AdminUser();
-        if (StringUtils.isNotBlank(adminPermissionParameter.g())) adminUser.setMobile(adminPermissionParameter.getMobile());
-        if (StringUtils.isNotBlank(adminPermissionParameter.getName())) adminUser.setName(adminPermissionParameter.getName());
-        ExampleMatcher matcher = ExampleMatcher.matching()
-                .withMatcher("mobile", match -> match.contains())
-                .withMatcher("name", match -> match.contains());
-        Example<AdminUser> example = Example.of(AdminUser, matcher);
-        return ResultUtil.okWithData(AdminUserRepository.findAll(example, sort));
+//        AdminUser adminUser = new AdminUser();
+//        if (StringUtils.isNotBlank(adminPermissionParameter.g())) adminUser.setMobile(adminPermissionParameter.getMobile());
+//        if (StringUtils.isNotBlank(adminPermissionParameter.getName())) adminUser.setName(adminPermissionParameter.getName());
+//        ExampleMatcher matcher = ExampleMatcher.matching()
+//                .withMatcher("mobile", match -> match.contains())
+//                .withMatcher("name", match -> match.contains());
+//        Example<AdminUser> example = Example.of(adminUser, matcher);
+//        return ResultUtil.okWithData(AdminUserRepository.findAll(example, sort));
+        return ResultUtil.okWithData(adminUserRepository.findAll());
     }
 
     @Override
-    public Result roleList(AdminPermissionParameter adminPermissionParameter) {
-        List<Role> roles = roleRepository.findAll();
-        Role role = roleRepository.findById(13).get();
-        roles.remove(role);
+    public Result adminRoleList(AdminPermissionParameter adminPermissionParameter) {
+        List<AdminRole> roles = adminRoleRepository.findAll();
+        AdminRole adminRole = adminRoleRepository.findById(13).get();
+        roles.remove(adminRole);
         return ResultUtil.okWithData(roles);
     }
 
     @Override
-    public Result AdminUser(AdminPermissionParameter adminPermissionParameter) {
-        return ResultUtil.okWithData(AdminUserRepository.findById(adminPermissionParameter.getAdminUserid()).get());
+    public Result adminUser(AdminPermissionParameter adminPermissionParameter) {
+        return ResultUtil.okWithData(adminUserRepository.findById(adminPermissionParameter.getUserid()).get());
     }
 
     @Override
-    public Result AdminUserSud(AdminPermissionParameter adminPermissionParameter) {
-        AdminUser AdminUser = null;
-        if (adminPermissionParameter.getAdminUserid() == 0) {
+    public Result adminUserSud(AdminPermissionParameter adminPermissionParameter) {
+        if (adminPermissionParameter.getSud() != 3) {
+            if (StringUtils.isBlank(adminPermissionParameter.getName())) return ResultUtil.errorWithMessage("名称不能为空！");
+            if (StringUtils.isBlank(adminPermissionParameter.getUsername())) return ResultUtil.errorWithMessage("用户名不能为空！");
+            if (adminPermissionParameter.getRoleid() == 0) return ResultUtil.errorWithMessage("配置角色未选择！");
             if (StringUtils.isBlank(adminPermissionParameter.getMobile())) return ResultUtil.errorWithMessage("电话不能为空！");
-            if (AdminUserRepository.findByMobile(adminPermissionParameter.getMobile()).size() > 0)
-                return ResultUtil.errorWithMessage("电话已经存在！");
-            AdminUser = new AdminUser();
-            AdminUser.setCreatetime(TimeUtils.format(System.currentTimeMillis()));
-            AdminUser.setIschange(0);
-            AdminUser me = (AdminUser) SecurityUtils.getSubject().getPrincipal();
-            AdminUser.setCreateAdminUsername(me.getName());
-        } else {
-            AdminUser = AdminUserRepository.findById(adminPermissionParameter.getAdminUserid()).get();
-            if (adminPermissionParameter.getDelete() != 0) {
-                if (AdminUser.getId() == ((AdminUser) SecurityUtils.getSubject().getPrincipal()).getId())
-                    SecurityUtils.getSubject().logout();
-                deleteAdminUser(AdminUser);
-                return ResultUtil.ok();
+            if (StringUtils.isBlank(adminPermissionParameter.getPassword())) return ResultUtil.errorWithMessage("密码不能为空！");
+
+            if (adminPermissionParameter.getName().length() > 10) return ResultUtil.errorWithMessage("名称不能超过10个字！");
+            if (adminPermissionParameter.getUsername().length() > 20) return ResultUtil.errorWithMessage("用户名不能超过20个字！");
+            String regex = "^[0-9]+$";
+            if (!adminPermissionParameter.getMobile().matches(regex)) return ResultUtil.errorWithMessage("电话只能是数字！");
+            if (adminPermissionParameter.getMobile().length() != 11) return ResultUtil.errorWithMessage("电话只能是11位手机号！");
+            if (adminPermissionParameter.getPassword().length() < 3 || adminPermissionParameter.getPassword().length() > 20)
+                return ResultUtil.errorWithMessage("密码长度不正确，请重新输入（最短3个字符，最长20个字符）！");
+            regex = "^[a-z0-9A-Z]+$";
+            if (!adminPermissionParameter.getPassword().matches(regex)) return ResultUtil.errorWithMessage("密码只支持数字和英文！");
+
+            AdminUser adminUser = null;
+            if (adminPermissionParameter.getSud() == 1) {
+                adminUser = new AdminUser();
+                if (adminPermissionParameter.getPassword().equals(adminPermissionParameter.getPassword2())) return ResultUtil.errorWithMessage("两次输入的密码不一致！");
+                AdminUser me = (AdminUser) SecurityUtils.getSubject().getPrincipal();
+                adminUser.setCreateusername(me.getName());
+                adminUser.setCreatetime(TimeUtils.format(System.currentTimeMillis()));
+            } else if (adminPermissionParameter.getSud() == 2) {
+                if (adminPermissionParameter.getUserid() == 0) return ResultUtil.errorWithMessage("用户ID不能为空！");
+                adminUser = adminUserRepository.findById(adminPermissionParameter.getUserid()).get();
             }
+
+            adminUser.setName(adminPermissionParameter.getName());
+            adminUser.setUsername(adminPermissionParameter.getUsername());
+            adminUser.setPassword(new Md5Hash(adminPermissionParameter.getPassword()).toHex());
+            adminUser.setMobile(adminPermissionParameter.getMobile());
+            adminUserRepository.save(adminUser);
+        } else if (adminPermissionParameter.getSud() == 3) {
+            AdminUser adminUser = adminUserRepository.findById(adminPermissionParameter.getUserid()).get();
+            deleteAdminUser(adminUser);
         }
-        if (StringUtils.isBlank(adminPermissionParameter.getMobile())) return ResultUtil.errorWithMessage("电话不能为空！");
-        if (StringUtils.isBlank(adminPermissionParameter.getName())) return ResultUtil.errorWithMessage("登录姓名不能为空！");
-        if (adminPermissionParameter.getName().length() > 10) return ResultUtil.errorWithMessage("登录姓名不能超过10个字！");
-        String regex = "^[0-9]+$";
-        if (!adminPermissionParameter.getMobile().matches(regex)) return ResultUtil.errorWithMessage("电话只能是数字！");
-        if (adminPermissionParameter.getMobile().length() != 11) return ResultUtil.errorWithMessage("电话只能是11位数字！");
-        if (StringUtils.isBlank(adminPermissionParameter.getPassword())) return ResultUtil.errorWithMessage("密码不能为空！");
-        regex = "^[a-z0-9A-Z]+$";
-        if (!adminPermissionParameter.getPassword().matches(regex)) return ResultUtil.errorWithMessage("密码只支持数字和英文！");
-        if (adminPermissionParameter.getRoleid() == 0) return ResultUtil.errorWithMessage("配置角色未选择！");
-        if (adminPermissionParameter.getRoleid() == -1) {
-            if (adminPermissionParameter.getSupplierid() == 0) return ResultUtil.errorWithMessage("供应商未选择！");
-            AdminUser.setSupplier(supplierRepository.findById(adminPermissionParameter.getSupplierid()).get());
-            AdminUser.setRole(null);
-            AdminUser.setDeliver(null);
-        } else if (adminPermissionParameter.getRoleid() == -2) {
-            AdminUser.setDeliver(1);
-            AdminUser.setSupplier(null);
-            AdminUser.setRole(null);
-        } else {
-            AdminUser.setSupplier(null);
-            AdminUser.setDeliver(null);
-            AdminUser.setRole(roleRepository.findById(adminPermissionParameter.getRoleid()).get());
-        }
-        AdminUser.setName(adminPermissionParameter.getName());
-        AdminUser.setPassword(new Md5Hash(adminPermissionParameter.getPassword()).toHex());
-        AdminUser.setMobile(adminPermissionParameter.getMobile());
-        AdminUserRepository.save(AdminUser);
         return ResultUtil.ok();
     }
 
     @Override
-    public Result role(AdminPermissionParameter adminPermissionParameter) {
-        return ResultUtil.okWithData(roleRepository.findById(adminPermissionParameter.getRoleid()).get());
+    public Result adminRole(AdminPermissionParameter adminPermissionParameter) {
+        return ResultUtil.okWithData(adminRoleRepository.findById(adminPermissionParameter.getRoleid()).get());
     }
 
     @Override
-    public Result roleSud(AdminPermissionParameter adminPermissionParameter) {
-        Role role = null;
-        if (adminPermissionParameter.getRoleid() == 0) {
-            role = new Role();
-        } else {
-            role = roleRepository.findById(adminPermissionParameter.getRoleid()).get();
-            if (adminPermissionParameter.getDelete() != 0) {
-                deleteRole(role);
-                return ResultUtil.ok();
-            }
-        }
+    public Result adminRoleSud(AdminPermissionParameter adminPermissionParameter) {
         if (StringUtils.isBlank(adminPermissionParameter.getName())) return ResultUtil.errorWithMessage("角色名称不能为空！");
         if (adminPermissionParameter.getName().length() > 10) return ResultUtil.errorWithMessage("角色名称最多10个字！");
-        role.setName(adminPermissionParameter.getName());
-        if (adminPermissionParameter.getProjectid() != 0)
-            role.setProjectid(projectRepository.findById(adminPermissionParameter.getProjectid()).get().getId());
-        Role saveedRole = roleRepository.save(role);
-        role2PermissionRepository.deleteAllByRole(role);
-        if (adminPermissionParameter.getPermission() != null && adminPermissionParameter.getPermission().size() > 0) {
-            adminPermissionParameter.getPermission().forEach(e -> {
-                Role2Permission role2Permission = new Role2Permission();
-                role2Permission.setRole(saveedRole);
-                role2Permission.setPermission(permissionRepository.findById(e).get());
-                role2PermissionRepository.save(role2Permission);
-            });
-        }
+
+//        if (adminPermissionParameter.getPermission() != null && adminPermissionParameter.getPermission().size() > 0) {
+//            adminPermissionParameter.getPermission().forEach(e -> {
+//                Role2Permission role2Permission = new Role2Permission();
+//                role2Permission.setRole(saveedRole);
+//                role2Permission.setPermission(permissionRepository.findById(e).get());
+//                adminRole2PermissionRepository.save(role2Permission);
+//            });
+//        }
         return ResultUtil.ok();
     }
 
     @Override
     public Result permissionList(AdminPermissionParameter adminPermissionParameter) {
         Sort sort = new Sort(Sort.Direction.ASC, "id");
-        return ResultUtil.okWithData(permissionRepository.findAll(sort));
+        return ResultUtil.okWithData(adminPermissionRepository.findAll(sort));
     }
 
     @Override
-    public Result changePassword(AdminPermissionParameter adminPermissionParameter) {
-        AdminUser AdminUser = (AdminUser) SecurityUtils.getSubject().getPrincipal();
-        if (StringUtils.isBlank(adminPermissionParameter.getPassword())) return ResultUtil.errorWithMessage("原录密码不能为空！");
+    public Result changeAdminPassword(AdminPermissionParameter adminPermissionParameter) {
+        AdminUser adminUser = (AdminUser) SecurityUtils.getSubject().getPrincipal();
+        if (StringUtils.isBlank(adminPermissionParameter.getPassword())) return ResultUtil.errorWithMessage("登录密码不能为空！");
         if (StringUtils.isBlank(adminPermissionParameter.getNewpassword())) return ResultUtil.errorWithMessage("新密码不能为空不能为空！");
         if (!adminPermissionParameter.getNewpassword().equals(adminPermissionParameter.getNewpassword2()))
             return ResultUtil.errorWithMessage("两次密码输入不一致，请重新输入！");
         if (adminPermissionParameter.getPassword().equals(adminPermissionParameter.getNewpassword()))
             return ResultUtil.errorWithMessage("新密码与原密码相同，请重新输入！");
         if (adminPermissionParameter.getNewpassword().length() < 3 || adminPermissionParameter.getNewpassword().length() > 20)
-            return ResultUtil.errorWithMessage("密码长度不正确，请重新输入（最短3个字符，最长20个字符）（！");
+            return ResultUtil.errorWithMessage("密a码长度不正确，请重新输入（最短3个字符，最长20个字符）！");
         String regex = "^[a-z0-9A-Z]+$";
-        if (!adminPermissionParameter.getNewpassword().matches(regex)) return ResultUtil.errorWithMessage("密码只包含数字和英文,其他字符不能输入！");
-        if (AdminUserRepository.findById(AdminUser.getId()).get().getPassword().equals(new Md5Hash(adminPermissionParameter.getPassword()).toHex())) {
-            AdminUser.setPassword(new Md5Hash(adminPermissionParameter.getNewpassword()).toHex());
-            AdminUser.setIschange(1);
-            AdminUserRepository.save(AdminUser);
+        if (!adminPermissionParameter.getNewpassword().matches(regex)) return ResultUtil.errorWithMessage("密码只能包含数字和英文！");
+        if (adminUserRepository.findById(adminUser.getId()).get().getPassword().equals(new Md5Hash(adminPermissionParameter.getPassword()).toHex())) {
+            adminUser.setPassword(new Md5Hash(adminPermissionParameter.getNewpassword()).toHex());
+            adminUser.setIslock(0);
+            adminUserRepository.save(adminUser);
             return ResultUtil.ok();
         } else {
             return ResultUtil.errorWithMessage("原密码错误！");
         }
     }
 
-    @Override
-    public Result setting(AdminPermissionParameter adminPermissionParameter) {
-        return ResultUtil.okWithData(settingRepository.findByType(adminPermissionParameter.getType()).get(0));
-    }
-
-    @Override
-    public Result settingSud(AdminPermissionParameter adminPermissionParameter) {
-        if (adminPermissionParameter.getType() == 1) {
-            if (StringUtils.isBlank(adminPermissionParameter.getValue())) return ResultUtil.errorWithMessage("价格系数不能为空！");
-            if (!adminPermissionParameter.getValue().matches("^(([1-9]\\d{0,9})|0)(\\.\\d{1,2})?$"))
-                return ResultUtil.errorWithMessage("价格系数只能是两位以内小数或整数！");
-            Setting setting = settingRepository.findByType(adminPermissionParameter.getType()).get(0);
-            setting.setValue(BigDecimal.valueOf(Double.parseDouble(adminPermissionParameter.getValue())));
-            settingRepository.save(setting);
-            return ResultUtil.ok();
-        } else if (adminPermissionParameter.getType() == 2) {
-            if (StringUtils.isBlank(adminPermissionParameter.getAccepttime())) return ResultUtil.errorWithMessage("接单时间不能为空！");
-            if (StringUtils.isBlank(adminPermissionParameter.getPricetime())) return ResultUtil.errorWithMessage("询价时间不能为空！");
-            String regex = "^[0-9]+$";
-            if (!adminPermissionParameter.getAccepttime().matches(regex)) return ResultUtil.errorWithMessage("接单时间只能是数字！");
-            if (!adminPermissionParameter.getPricetime().matches(regex)) return ResultUtil.errorWithMessage("询价时间只能是数字！");
-            Setting setting2 = settingRepository.findByType(2).get(0);
-            setting2.setValue(new BigDecimal(adminPermissionParameter.getPricetime()));
-            settingRepository.save(setting2);
-            Setting setting3 = settingRepository.findByType(3).get(0);
-            setting3.setValue(new BigDecimal(adminPermissionParameter.getAccepttime()));
-            settingRepository.save(setting2);
-        }
-        return ResultUtil.ok();
-    }
-
-    @Override
-    public Result upload(MultipartFile file, AdminPermissionParameter adminPermissionParameter) {
-        String fileName = adminPermissionParameter.getResourceid() + "-" + file.getOriginalFilename();
-        String path = uploadPath + fileName;
-        File dest = new File(path);
-        try {
-            file.transferTo(dest);
-            Resource resource = resourceRepository.findById(adminPermissionParameter.getResourceid()).get();
-            resource.setFile(fileName);
-            resourceRepository.save(resource);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return ResultUtil.errorWithMessage("文件上传失败！");
-        } finally {
-            return ResultUtil.okWithData(fileName);
-        }
-    }
-
-    @Override
-    public void deleteRole(Role role) {
-        AdminUserRepository.findByRole(role).forEach(e -> {
-            e.setRole(null);
-            AdminUserRepository.save(e);
+    public void deleteRole(AdminRole adminRole) {
+        adminUserRepository.findByRole(adminRole).forEach(e -> {
+            e.setAdminRole(null);
+            adminUserRepository.save(e);
         });
-        role2PermissionRepository.deleteAllByRole(role);
-        roleRepository.delete(role);
+        adminRole2PermissionRepository.deleteAllByRole(adminRole);
+        adminRoleRepository.delete(adminRole);
     }
 
-    public void deleteAdminUser(AdminUser AdminUser) {
-        AdminUserRepository.delete(AdminUser);
+    public void deleteAdminUser(AdminUser adminUser) {
+        adminUserRepository.delete(adminUser);
     }
 }
