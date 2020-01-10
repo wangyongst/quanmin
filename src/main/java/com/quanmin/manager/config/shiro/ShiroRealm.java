@@ -38,7 +38,7 @@ public class ShiroRealm extends AuthorizingRealm {
     protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken token) throws AuthenticationException {
         String username = (String) token.getPrincipal();
         AdminUser adminUser = null;
-        Result result = adminService.findByAdminUsername(username);
+        Result result = adminService.login(username);
         if (result.getStatus() == 1) adminUser = (AdminUser) result.getData();
         else throw new AuthenticationException();
         if (adminUser == null) {

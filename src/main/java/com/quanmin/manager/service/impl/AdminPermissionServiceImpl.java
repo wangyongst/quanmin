@@ -17,18 +17,12 @@ import org.apache.logging.log4j.Logger;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.crypto.hash.Md5Hash;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
-import org.springframework.data.domain.Example;
-import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.math.BigDecimal;
 import java.util.List;
 
 ;
@@ -60,9 +54,13 @@ public class AdminPermissionServiceImpl implements AdminPermissionService {
     }
 
     @Override
-    public Result findByAdminUsername(String username) {
+    public Result login(String username) {
         List<AdminUser> AdminUserList = adminUserRepository.findByUsername(username);
-        if (AdminUserList.size() == 1) return ResultUtil.okWithData(AdminUserList.get(0));
+        if (AdminUserList.size() == 1){
+            AdminUser adminUser = AdminUserList.get(0);
+            if(adminUser.getIslock() == 1) ResultUtil.errorWithMessage("账号已经锁定，不能登录！");
+            return ResultUtil.okWithData(adminUser);
+        }
         return ResultUtil.errorWithMessage("查询失败！");
     }
 

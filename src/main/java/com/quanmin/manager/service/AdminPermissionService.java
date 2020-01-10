@@ -7,7 +7,7 @@ public interface AdminPermissionService {
 
     Result me();
 
-    Result findByAdminUsername(String username);
+    Result login(String username);
 
     Result adminUserList(AdminPermissionParameter adminPermissionParameter);
 
