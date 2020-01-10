@@ -13,7 +13,7 @@ function logout() {
 };
 
 function changepassword() {
-    window.location.href = "/view/page-changepassword";
+    window.location.href = "/view/permission/page-changepassword";
 };
 
 
