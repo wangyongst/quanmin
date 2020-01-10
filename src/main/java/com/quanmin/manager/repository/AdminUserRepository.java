@@ -17,5 +17,5 @@ public interface AdminUserRepository extends JpaRepository<AdminUser, Integer>, 
 
     List<AdminUser> findByUsername(String username);
 
-    List<AdminUser> findByRole(AdminRole adminRole);
+    List<AdminUser> findByAdminRole(AdminRole adminRole);
 }

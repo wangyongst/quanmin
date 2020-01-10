@@ -11,5 +11,5 @@ import org.springframework.stereotype.Repository;
 @RepositoryDefinition(domainClass = AdminRole2Permission.class, idClass = Integer.class)
 public interface AdminRole2PermissionRepository extends JpaRepository<AdminRole2Permission, Integer> , JpaSpecificationExecutor<AdminRole2Permission>{
 
-        void deleteAllByRole(AdminRole adminRole);
+        void deleteAllByAdminRole(AdminRole adminRole);
 }

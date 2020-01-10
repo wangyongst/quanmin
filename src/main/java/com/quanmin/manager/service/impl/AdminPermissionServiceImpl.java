@@ -187,11 +187,11 @@ public class AdminPermissionServiceImpl implements AdminPermissionService {
     }
 
     public void deleteRole(AdminRole adminRole) {
-        adminUserRepository.findByRole(adminRole).forEach(e -> {
+        adminUserRepository.findByAdminRole(adminRole).forEach(e -> {
             e.setAdminRole(null);
             adminUserRepository.save(e);
         });
-        adminRole2PermissionRepository.deleteAllByRole(adminRole);
+        adminRole2PermissionRepository.deleteAllByAdminRole(adminRole);
         adminRoleRepository.delete(adminRole);
     }
 
